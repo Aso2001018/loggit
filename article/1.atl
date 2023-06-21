@@ -1,0 +1,76 @@
+JavaScriptで動的にデータを受信する時、どのような手法があるか。
+- jQueryのAjax
+- XMLHttpRequest
+この2種類、もう古いらしい。
+そもそも、jQueryは2014年から音沙汰がなく、jQueryMobileも非推奨になったとか。
+現代jQueryはレガシーらしい。時代だなぁ...
+XMLHttpRequestは、ついこの間までわたしも使ってたやつ。というかこれしかないかと思ってた。
+AjaxもXMLHttpRequestのラッパーなので、まぁこれを使うのが基本だろうと思ってた。
+## Fetch API
+ついこの前まで全く知らなかったのだが、jsで動的にデータを受信する際、最近はfetchを使うのが良いらしい。
+実際のサンプルコードを見て見よう。
+## fetchのサンプルコード
+```JavaScript
+fetch('filename').then(
+    response => response.text()
+).then(data => {
+    console.log('success!', data);
+}).catch(e => {
+    console.log('failed!', e);
+}).finally(() => {
+    console.log('finish!');
+});
+```
+結構わかりやすいが、これだけ見るとajaxとそこまで書き方は変わらない。
+最初のthenでtextやjson、arrayBufferに変換できるのは良いが、正直わかりやすいかと言われればいまいち。
+fetchの真骨頂はasync/awaitを使った際に現れる。
+```JavaScript
+(async () => {
+    try {
+        const response = await fetch('finename');
+        const data = await response.text();
+        console.log('success!', data);
+    } catch (e) {
+        console.log('failed!', e);
+    } finally {
+        console.log('finish!');
+    }
+})();
+```
+async/awaitに慣れてないと、ちょっと分かりづらいかもしれないが、
+基本的にすべてJavaScriptの基本構文で書けるので、何が行われているのかがわかりやすい。
+asyncは、非同期関数。「この中ではawaitが使えるよ」的な覚え方でOK
+awaitは、非同期完了待機を表す。今回の例だと、fetchは非同期でデータを取ってくる。
+その非同期処理が完了するまでasync関数を止めて待ってくれるのだ。
+ちなみに、try/catch/finallyをなくせば、かなり短く書ける。
+```JavaScript
+(async () => console.log('success!', await(await fetch('finename')).text()))();
+```
+エラー処理がないのはちょっと危ないけど、ここまで短く書けるのは結構魅力的ではなかろうか。
+
+async/awaitで書けると、ファイル文字列の連結とかも簡潔に書けて便利
+```JavaScript
+(async => {
+    const text1 = await(await fetch('file1')).text();
+    const text2 = await(await fetch('file2')).text();
+    const text3 = await(await fetch('file3')).text();
+    console.log(`${text1}${text2}${text3}`);
+})
+```
+## パラメータの送信
+メソッド指定やパラメータの送信も割と簡単
+```JavaScript
+(async () => {
+    const result = await(await fetch('check.php', {
+        method: 'post',
+        body: '送信データ'
+    })).json();
+})
+```
+こんな感じで簡単に送信できてしまうから便利。
+オプションパラメータは結構あるみたいなので、リファレンスを見よう。
+| 
+Ajax|jQueryが古いので、もう使うのをやめよう
+XMLHttpRequest|管理が面倒なので、もう使うのをやめよう。
+fetch|みんなこれを使おう
+|
